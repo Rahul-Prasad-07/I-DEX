@@ -140,6 +140,20 @@ contract Exchange is ERC20 {
 
         return numerator / denominator;
     }
+    
+    /**
+     * THis function ethToTokenSwap allows users to swap ETH for tokens
+     * @param minTokenToReceive The minimum amount of token to receive
+     * @notice calling the getAmountFromSwap function to calculate the amount of token to receive
+     */
+    function ethToTokenSwap (uint256 minTokenToReceive) public payable {
+        uint256 tokenReserveBalance = getReserve();
+        uint256 tokenToReceive = getAmountFromSwap(msg.value, address(this).balance - msg.value, tokenReserveBalance);
+
+        require(tokenToReceive >= minTokenToReceive, "Tokens received are less than minimum tokens expected");
+
+        ERC20(tokenAddress).transfer(msg.sender, tokenToReceive);
+    }
 
 
 

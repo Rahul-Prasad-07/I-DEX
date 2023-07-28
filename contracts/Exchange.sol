@@ -154,6 +154,27 @@ contract Exchange is ERC20 {
 
         ERC20(tokenAddress).transfer(msg.sender, tokenToReceive);
     }
+    
+
+    /**
+     * 
+     * @param tokenToSwap The amount of token to swap
+     * @param minEThToReceive  The minimum amount of eth to receive
+     */
+    function tokenToEthSwap(uint256 tokenToSwap, uint256 minEThToReceive) public {
+
+        uint256 tokenReserveBalance =  getReserve();
+
+        uint256 ethToReceive = getAmountFromSwap(tokenToSwap, tokenReserveBalance, address(this).balance);
+
+        require(ethToReceive >= minEThToReceive, "Eth received is less than minimum eth expected");
+
+        ERC20(tokenAddress).transferFrom(msg.sender, address(this), tokenToSwap);
+
+        payable(msg.sender).transfer(ethToReceive);
+        
+
+    }
 
 
 

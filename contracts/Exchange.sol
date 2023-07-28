@@ -37,13 +37,17 @@ contract Exchange is ERC20 {
     }
 
     /**
-     * @notice addLiquidity function allows users to add liquidity to the exchange
-     * @param amountOfToken The amount of Liquidity to add in exchnage
+     * @notice Add liquidity by paying eth and transfering tokens to the exchange
+     * @param amountOfToken The amount of Liquidity to add in exchnage or  represents the amount of tokens transfered
      * @return uint256 The amount of LP tokens minted to represent the share of the pool
+     * @dev When somebody adds liquidity, they get LP tokens
+     * @dev If the exchange has a ration of token/eth then the amount of tokens/eth added should respect it
      * @notice calculating the minimum amount of token required to be transferred to the exchange =  x*deltaY / y - deltaX 
      * @notice calculating the minimum amount of ETH required to be transferred to the exchange =  y*deltaX / x + deltaY
      * 
      * Now the question is do we add only Eth or only token or both? while adding liquidity
+     * Adding liquidity involves adding tokens from both sides of the trading pair - you cannot add liquidity for just one side.
+     * @notice This function accepts ETH and a token from the user.
      * 
      */
     function addLiquidity(uint256 amountOfToken) public payable returns (uint256){
@@ -64,14 +68,14 @@ contract Exchange is ERC20 {
             return lpTokenToMint;
         }
 
-        uint256 ethReservePriorToFunctionCall = ethReserveBalance - msg.value;
+        uint256 ethReserve = ethReserveBalance - msg.value;
         
         // calculating the minimum amount of token required to be transferred to the exchange =  x*deltaY / y - deltaX 
         // x*deltaY / y - deltaX = deltaX
-        // (msg.value * tokenReserveBalance) / ethReservePriorToFunctionCall = minTokenAmountRequired
+        // (msg.value * tokenReserveBalance) / ethReserve = minTokenAmountRequired
         // where x - amount of token reserved, y - amount of eth reserved
         // where deltaX - amount of eth sent by the user, deltaY - amount of token sent by the user
-        uint256 minTokenAmountRequired = (msg.value * tokenReserveBalance) / ethReservePriorToFunctionCall;
+        uint256 minTokenAmountRequired = (msg.value * tokenReserveBalance) / ethReserve;
 
         require(amountOfToken >= minTokenAmountRequired, "Insufficient amount of token passed");
 
@@ -79,7 +83,7 @@ contract Exchange is ERC20 {
         token.transferFrom(msg.sender, address(this), minTokenAmountRequired);
 
         // calculate the amount of LP tokens to mint
-        lpTokenToMint = (msg.value * totalSupply()) / ethReservePriorToFunctionCall;
+        lpTokenToMint = (msg.value * totalSupply()) / ethReserve;
 
         // mint the LP tokens to the user
         _mint(msg.sender, lpTokenToMint);
@@ -87,6 +91,35 @@ contract Exchange is ERC20 {
         return lpTokenToMint;
 
 
+    }
+
+    /**
+     * 
+     * @param amountOfLPTokens The amount of LP tokens to burn
+     * @return  uint256 The amount of eth and token returned to the user
+     * @dev When somebody removes liquidity, they get ETH and TOKEN
+     * @dev The amount of eth and token returned to the user should be in proportion to the amount of LP tokens burned
+     * @notice calculating the amount of eth to return to the user = ethReserveBalance * amountOfLPTokens / lpTokenTotalSupply
+     */
+    function removeLiquidity(uint256 amountOfLPTokens) public returns (uint256, uint256){
+
+        // check that user wants to remove > 0 LP tokens
+        require(amountOfLPTokens > 0, "Amount of LP tokens passed is 0");
+
+        uint256 ethReserveBalance = address(this).balance;
+        uint256 lpTokenTotalSupply =  totalSupply();
+
+        // calculate the amount of eth and token to return to the user
+        uint256 ethToReturn = (ethReserveBalance * amountOfLPTokens) / lpTokenTotalSupply;
+
+        uint256 tokenToReturn = (getReserve() * amountOfLPTokens)/ lpTokenTotalSupply;
+
+        // Burn the LP tokens from the user and transfer the eth and token to the user
+        _burn(msg.sender, amountOfLPTokens);
+        payable(msg.sender).transfer(ethToReturn);
+        ERC20(tokenAddress).transfer(msg.sender, tokenToReturn);
+
+        return (ethToReturn, tokenToReturn);
     }
 
 

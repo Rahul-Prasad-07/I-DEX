@@ -122,6 +122,25 @@ contract Exchange is ERC20 {
         return (ethToReturn, tokenToReturn);
     }
 
+   
+    
+    /**
+     * dosen't understand this function
+     * @param inputAmount The amount of token to swap
+     * @param inputReserve  The amount of token in the exchange
+     * @param outputReserve  The amount of DeltaX 
+     */
+    function getAmountFromSwap(uint256 inputAmount, uint256 inputReserve, uint256 outputReserve) public pure returns(uint256){
+        require(inputReserve > 0 && outputReserve > 0, "Reserve must be greater than 0");
+
+        uint256 inputAmountWithFee = inputAmount * 99;
+
+        uint256 numerator = inputAmountWithFee * outputReserve;
+        uint256 denominator = (inputReserve * 100) + inputAmountWithFee;
+
+        return numerator / denominator;
+    }
+
 
 
 }

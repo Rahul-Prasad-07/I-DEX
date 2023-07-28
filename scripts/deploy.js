@@ -6,6 +6,10 @@
 // global scope, and execute the script.
 const hre = require("hardhat");
 
+async function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function main() {
   //deploy the token contract
   const tokenContract = await hre.ethers.deployContract("Token");

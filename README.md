@@ -1,4 +1,11 @@
-# I-DEX
+
+
+<p align="center"> 
+
+![image](https://github.com/Rahul-Prasad-07/I-DEX/assets/99068989/7a2d4ad6-28cf-4b37-97b4-a3f9b7b7b025)
+
+</P>
+
 
 Inter-planetary decentralized exchange
 
